@@ -1,16 +1,16 @@
-const  Thought = require('../models/Thought');
-const User = require('../models/User');
+const { User, Thought} = require("../models");
+//const User = require('../models/User');
 
 module.exports = {
     // get all thoughts
     getThought(req, res) {
         Thought.find()
-            .then((thoughts) => res.json(thoughts))
+            .then((thought) => res.json(thought))
             .catch((err) => res.status(500).json(err));
     },
     // get one thought
     getSingleThought(req, res) {
-        Thought.findOne({ _id: req.params.id })
+        Thought.findOne({ _id: req.params.thoughtId })
         .select('-__v')
         .then((thought) =>
             !thought
@@ -22,18 +22,18 @@ module.exports = {
     // create thought
     createThought(req, res) {
         Thought.create(req.body)
-        .then((thought) => {
+        .then((_id) => {
             return User.findOneAndUpdate(
                 { _id: req.body.userId },
-                { $addToSet: { thoughts: thought._id } },
+                { $addToSet: { thoughts: _id } },
                 { new: true }
             );  
-        }).then((user) => 
-            !user
+        }).then((thought) => 
+            !thought
             ? res.status(404).json({ 
                 message: 'No user found with this id!', 
             })
-            : res.json('Thought added!')
+            : res.json('Thought added')
         )
         .catch((err) => {
             console.log(err);
@@ -41,9 +41,10 @@ module.exports = {
         });    
     },
     updateThought(req, res) {
-        Thought.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true })
-        .then((thought) => {
-            if (!thought) {
+        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, { $set: req.body}, 
+            { runValidators: true, New: true })
+        .then((user) => {
+            if (!user) {
                 res.status(404).json({ message: 'No thought found with this id!' });
                 return;
             }
